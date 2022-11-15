@@ -7,7 +7,7 @@ WORKDIR /OpenDataology
 
 COPY . .
 
-# 安装环境
+# install env
 RUN pip install -r requirements.txt --no-cache-dir
 
 RUN sed -i '5i from werkzeug.utils import cached_property' /usr/local/lib/python3.8/site-packages/werkzeug/__init__.py

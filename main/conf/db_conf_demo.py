@@ -1,11 +1,9 @@
 # Database Configuration
-dbms_server = ""
-dbms_driver = ""
+dbms_server = "mysql"
+dbms_driver = "pymysql"
 
-# ALiCloud RDS MYSQL
 dbms_usr = ""
 dbms_pwd = ""
 dbms_addr = ""
-
 dbms_port = ""
 dbms_db = ""

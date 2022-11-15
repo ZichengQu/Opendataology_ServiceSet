@@ -1,13 +1,15 @@
 from flask import request
 from flask import json
 
-from flask import send_file, send_from_directory, make_response
+from flask import send_from_directory, make_response
 
 from flask_restplus import Resource
 from flask_restplus import marshal
 
 from main.data_transform_object.dataset import DatasetObject
 from main.data_transform_object.user import UserObject
+from main.data_transform_object.admin import AdminObject
+
 from main.util.namespace import user_dataset_review_ns, auth_dataset_review_ns
 from main.service import dataset_review
 
@@ -43,7 +45,7 @@ class ReviewUploadByFile(Resource):
         user_id = request.form.get("user_id")
         dataset_review_list_req = request.files.get('dataset_review_list')
 
-        dataset_review_list = dataset_review.file_convert(user_id, dataset_review_list_req)
+        dataset_review_list = dataset_review.file_convert_dataset(user_id, dataset_review_list_req)
 
         if dataset_review_list['message'] == 'success':
             dataset_review_list = dataset_review_list['notification']
@@ -135,6 +137,47 @@ class RemoveAIBOM(Resource):
 
         # Execute the specific method, and get the returned dictionary
         response_dict = dataset_review.remove_pending_aibom_list(user_id, pending_aibom_ids)
+
+        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+
+        model_ret = DatasetObject.dataset_review_msg_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
+
+        return marshal(response_dict, model_ret), status_code
+
+
+@user_dataset_review_ns.route("/get_license")
+class GetLicense(Resource):
+    @user_dataset_review_ns.expect(DatasetObject.string_req)
+    @user_dataset_review_ns.response(200, 'success', model=DatasetObject.license_list_resp)
+    @user_dataset_review_ns.response(403, 'fail', model=DatasetObject.dataset_review_msg_resp)
+    def get(self):
+        """通过text获取满足模糊查询的license列表，若不传入text则默认获取所有license列表"""
+        text = request.args.get('text', '')
+
+        # Execute the specific method, and get the returned dictionary
+        response_dict = dataset_review.get_dataset_license_list(text)
+
+        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+
+        model_ret = DatasetObject.license_list_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
+
+        return marshal(response_dict, model_ret), status_code
+
+
+@auth_dataset_review_ns.route("/is_admin")
+class IsAdmin(Resource):
+    @auth_dataset_review_ns.expect(AdminObject.Admin_user_req)
+    @auth_dataset_review_ns.response(200, 'success', model=DatasetObject.dataset_review_msg_resp)
+    @auth_dataset_review_ns.response(403, 'fail', model=DatasetObject.dataset_review_msg_resp)
+    def post(self):
+        """获取用户是否为admin，成功返回success，失败返回fail"""
+        hashmap = json.loads(request.data)
+
+        user_id = hashmap.get('user_id', '')
+        account = hashmap.get('account', '')
+
+        # Execute the specific method, and get the returned dictionary
+        response_dict = dataset_review.is_admin(user_id, account)
 
         status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
 
@@ -270,3 +313,29 @@ class ReviewResultDownload(Resource):
             res.headers["Cache-Control"] = "no_store"
             res.headers["max-age"] = 1
             return res
+
+
+@auth_dataset_review_ns.route("/license_upload_by_file")
+class LicenseUploadByFile(Resource):
+    @auth_dataset_review_ns.expect(DatasetObject.dataset_license_list_req)
+    @auth_dataset_review_ns.response(200, 'success', model=DatasetObject.dataset_review_msg_resp)
+    @auth_dataset_review_ns.response(403, 'fail', model=DatasetObject.dataset_license_list_resp)
+    def post(self):
+        """License通过文件批量上传，已存在的不会重复添加，会放入fail列表中，成功的会放入success列表中，若都成功，则只返回成功提示"""
+        user_id = request.form.get("user_id")
+        dataset_license_list_req = request.files.get('dataset_license_list')
+
+        dataset_license_list_req = dataset_review.file_convert_license(user_id, dataset_license_list_req)
+
+        if dataset_license_list_req['message'] == 'success':
+            dataset_license_list = dataset_license_list_req['notification']
+            # Execute the specific method, and get the returned dictionary
+            response_dict = dataset_review.license_upload(user_id, dataset_license_list)
+        else:
+            response_dict = dataset_license_list_req
+
+        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+
+        model_ret = DatasetObject.dataset_review_msg_resp if status_code == 200 else DatasetObject.dataset_license_list_resp
+
+        return marshal(response_dict, model_ret), status_code

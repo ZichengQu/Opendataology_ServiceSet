@@ -133,8 +133,35 @@ class DatasetObject:
         'notification': fields.String(description='自定义提示内容')
     })
 
+    # 单个License上传信息
+    dataset_license = user_dataset_review_ns.model("13. dataset_license", {
+        'full_name': fields.String(description='License全称', required=True),
+        'identifier': fields.String(description='License标识符', required=True),
+        'fsf_free_libre': fields.String(description='fsf_free/libre', required=False),
+        'osi_approved': fields.String(description='osi approved', required=False)
+    })
 
+    # 批量License上传信息
+    dataset_license_list_req = user_dataset_review_ns.model("14. dataset_review_list_req", {
+        'user_id': fields.Integer(description='用户id', required=True),
+        'dataset_license_list': fields.List(fields.Nested(dataset_license), description='批量License上传信息', required=True)
+    })
 
+    # 批量License上传信息结果
+    dataset_license_list_resp = user_dataset_review_ns.model("15. dataset_license_list_resp", {
+        'license_success_list': fields.List(fields.Nested(dataset_license), description='上传成功的License'),
+        'license_fail_list': fields.List(fields.Nested(dataset_license), description='上传失败的License'),
+        'message': fields.String(description='success 或 fail'),
+        'notification': fields.String(description='自定义提示内容')
+    })
 
+    # 批量License上传信息结果
+    license_list_resp = user_dataset_review_ns.model("16. license_list_resp", {
+        'spdx_license_list': fields.List(fields.Nested(dataset_license), description='License list'),
+        'message': fields.String(description='success 或 fail'),
+        'notification': fields.String(description='自定义提示内容')
+    })
 
-
+    string_req = user_dataset_review_ns.model("17. String Req", {
+        'text': fields.String(description='text'),
+    })

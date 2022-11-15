@@ -1,6 +1,6 @@
 import traceback
 
-from main.model.db_models import Review_result, Pending_aibom, Pending_review, Review_result
+from main.model.db_models import Pending_aibom, Pending_review, Review_result, Admin, Spdx_license_list
 from main import db  # db is not required for queries, but is required for writes
 
 import os
@@ -14,21 +14,21 @@ import codecs
 
 def review_upload(user_id, dataset_review_list):
     """
-    @param: user_id: 上传数据集获取使用风险的用户
-    @param: dataset_review_list: 上传的数据集定位信息列表
+    @param: user_id: the user who upload datasets to obtain the review result
+    @param: dataset_review_list: list of dataset identifiers
     """
-    datasets_review_result = []  # 可直接返回给用户结果的数据集列表
-    datasets_pending_aibom = []  # 需用户补充AIBOM，经审核后再返回给用户的数据集列表
+    datasets_review_result = []
+    datasets_pending_aibom = []
 
     for dataset_review in dataset_review_list:
-        # 获取每个数据集的定位信息
+        # get the identifiers of each dataset
         name = dataset_review.get("name", "")
         location = dataset_review.get("location", "")
         originator = dataset_review.get("originator", [])
-        # 用英文逗号分割，去除左右空格，并转成hashset
+        # split via comma and convert to hashset
         originator = set([contributor.strip() for contributor in originator.split(",")])
 
-        # 从表review_result中获取潜在对应的已审核过的数据集
+        # Get the potential corresponding audited dataset from the table review_result
         try:
             review_result = Review_result.query.filter_by(name=name, location=location).all()
         except Exception as e:
@@ -37,15 +37,15 @@ def review_upload(user_id, dataset_review_list):
             ret['notification'] = e
             return ret
 
-        is_reviewed = False  # 该数据集是否审核过
+        is_reviewed = False  # Whether the dataset has been audited
 
         if name != "" and location != "" and len(originator) != 0:
             for review in review_result:
-                # 获取该潜在对应的已审核过的数据集的originator
+                # Gets the originator of the potential corresponding reviewed dataset
                 review_originator = set([originator.strip() for originator in review.originator.split(",")])
-                # 计算用户上传数据集和潜在审核过数据集的originator交集个数
+                # Calculate the number of originator intersections between user-uploaded datasets and potentially reviewed datasets
                 intersection = len(originator & review_originator)
-                # 如果交集个数大于等于2，或用户提供的一半以上的originator重合，则认为用户上传的数据集已审核过
+                # If the overlap number is greater than or equal to 2, or more than half of Originators provided by users overlap, the dataset uploaded by users is considered to have been reviewed
                 if intersection >= 2 or intersection / len(originator) >= 0.5:
                     datasets_review_result.append(review)
                     is_reviewed = True
@@ -127,7 +127,7 @@ def submit_pending_aibom_list(pending_aibom_list):
     error_pending_aibom_format = []
 
     for pending_aibom in pending_aibom_list:
-        is_pass = format_check_aibom(pending_aibom)  # 格式检查
+        is_pass = format_check_aibom(pending_aibom)
 
         if is_pass:
             pending_review = convert_aibom_to_review(pending_aibom)
@@ -135,7 +135,7 @@ def submit_pending_aibom_list(pending_aibom_list):
                                                               user_id=pending_aibom.get('user_id', '')).first()
             if to_delete is None:
                 ret['message'] = 'fail'
-                ret['notification'] = 'pending aibom中已无该条数据，无法submit'
+                ret['notification'] = 'Cannot submit due to no record in pending aibom'
                 return ret
 
             to_delete = Pending_aibom.__table__.delete().where(Pending_aibom.user_id == pending_aibom.get('user_id', '')).where(
@@ -156,7 +156,7 @@ def submit_pending_aibom_list(pending_aibom_list):
     if len(error_pending_aibom_format) != 0:
         ret['pending_aibom_list'] = error_pending_aibom_format
         ret['message'] = "fail"
-        ret['notification'] = "AIBOM信息已提交, {}个数据集的AIBOM部分格式错误, 请修改后提交".format(len(error_pending_aibom_format))
+        ret['notification'] = "AIBOM info has been submitted, the format of AIBOM is incorrect for {} dataset, please submit after modify".format(len(error_pending_aibom_format))
     else:
         ret['message'] = "success"
         ret['notification'] = ""
@@ -183,6 +183,27 @@ def remove_pending_aibom_list(user_id, pending_aibom_ids):
         ret['message'] = 'fail'
         ret['notification'] = e
 
+    return ret
+
+
+def is_admin(user_id, account):
+    ret = dict()
+    try:
+        user_id = int(user_id)
+        account = str(account)
+        admin = Admin.query.filter_by(uid=user_id, account=account).first()
+
+        if admin is None:
+            ret['message'] = 'fail'
+            ret['notification'] = 'not admin!'
+            return ret
+    except Exception as e:
+        ret['message'] = 'fail'
+        ret['notification'] = e
+        return ret
+
+    ret['message'] = 'success'
+    ret['notification'] = ''
     return ret
 
 
@@ -291,7 +312,7 @@ def submit_pending_review_list(pending_review_list):
     if len(error_pending_review_format) != 0:
         ret['pending_review_list'] = error_pending_review_format
         ret['message'] = "fail"
-        ret['notification'] = "review信息已提交, {}个数据集的AIBOM或review部分格式错误, 请修改后提交".format(len(error_pending_review_format))
+        ret['notification'] = "review info has been submitted, the format of review is incorrect for {} dataset, please submit after modify".format(len(error_pending_review_format))
     else:
         ret['message'] = "success"
         ret['notification'] = ""
@@ -312,6 +333,70 @@ def get_review_result_list(user_id):
         return ret
 
     ret['review_result_list'] = review_result
+    ret['message'] = 'success'
+    ret['notification'] = ''
+    return ret
+
+
+def license_upload(user_id, dataset_license_list):
+    license_success_list = []
+    license_fail_list = []
+
+    for dataset_license in dataset_license_list:
+        # get the identifiers of each dataset
+        full_name = dataset_license.get("full_name", "")
+        identifier = dataset_license.get("identifier", "")
+
+        # Get the potential corresponding audited dataset from the table review_result
+        try:
+            spdx_license_list = Spdx_license_list.query.filter_by(full_name=full_name, identifier=identifier).all()
+        except Exception as e:
+            ret = dict()
+            ret['message'] = 'fail'
+            ret['notification'] = e
+            return ret
+
+        if spdx_license_list is None or len(spdx_license_list) == 0:
+            cur_license = license_transfer(dataset_license, user_id)
+            try:
+                db.session.add(cur_license)
+                db.session.commit()
+                license_success_list.append(dataset_license)
+            except Exception as e:
+                print(e)
+                db.session.rollback()
+        else:
+            license_fail_list.append(dataset_license)
+
+    ret = dict()
+    if len(license_fail_list) != 0:
+        ret['license_success_list'] = license_success_list
+        ret['license_fail_list'] = license_fail_list
+        ret['message'] = 'fail'
+        ret['notification'] = ''
+    else:
+        ret['message'] = 'success'
+        ret['notification'] = ''
+
+    return ret
+
+
+def get_dataset_license_list(text):
+    ret = dict()
+    try:
+        if text == "":
+            spdx_license_list = Spdx_license_list.query.all()
+        else:
+            spdx_license_list_1 = set(Spdx_license_list.query.filter(Spdx_license_list.full_name.like('%' + text + '%')).all())
+            spdx_license_list_2 = set(Spdx_license_list.query.filter(Spdx_license_list.identifier.like('%' + text + '%')).all())
+            spdx_license_list = spdx_license_list_1 | spdx_license_list_2
+
+    except Exception as e:
+        ret['message'] = 'fail'
+        ret['notification'] = e
+        return ret
+
+    ret['spdx_license_list'] = spdx_license_list
     ret['message'] = 'success'
     ret['notification'] = ''
     return ret
@@ -399,6 +484,15 @@ def pending_review_transfer(ori_pending_review, new_pending_review):
     return ori_pending_review
 
 
+def license_transfer(dataset_license, user_id):
+    cur_license = Spdx_license_list(
+        full_name=dataset_license.get("full_name", ""),
+        identifier=dataset_license.get("identifier", ""),
+        user_id=user_id
+    )
+    return cur_license
+
+
 def convert_aibom_to_review(pending_aibom):
     pending_review = Pending_review(
         name=pending_aibom.get("name", ""),
@@ -421,28 +515,6 @@ def convert_aibom_to_review(pending_aibom):
         is_dataset_commercially_distributed_initial=0,
         is_product_commercially_published_initial=0
     )
-
-    # if "concluded_license" in pending_aibom.keys():
-    #     pending_review.concluded_license = pending_aibom.get("concluded_license", None)
-    # if "declared_license" in pending_aibom.keys():
-    #     pending_review.declared_license = pending_aibom.get("declared_license", None)
-    # if "checksum" in pending_aibom.keys():
-    #     pending_review.checksum = pending_aibom.get("checksum", None),
-    # if "data_collection_process" in pending_aibom.keys():
-    #     pending_review.data_collection_process = pending_aibom.get("data_collection_process", None),
-    # if "known_biases" in pending_aibom.keys() and pending_aibom.get("known_biases") is not None:
-    #     flag = pending_aibom.get("known_biases", 0)
-    #     # num = 1 if flag else 0
-    #     pending_review.known_biases = flag,
-    #     print(type(pending_review.known_biases))
-    #     print(pending_review.known_biases)
-    # if "sensitive_personal_information" in pending_aibom.keys() and pending_aibom.get(
-    #         "sensitive_personal_information") is not None:
-    #     flag = pending_aibom.get("sensitive_personal_information", 0)
-    #     pending_review.sensitive_personal_information = 1 if flag else 0,
-    # if "offensive_content" in pending_aibom.keys() and pending_aibom.get("offensive_content") is not None:
-    #     flag = pending_aibom.get("offensive_content", 0)
-    #     pending_review.offensive_content = 1 if flag else 0,
 
     return pending_review
 
@@ -542,13 +614,13 @@ def file_suffix_check(cur_file):
     return False
 
 
-def file_save(user_id, cur_file):
+def file_save(user_id, cur_file, path):
     try:
         file_name = str(user_id) + "_" + str(int(time.time())) + "_" + str(random.randint(0, 2147483647)) + ".csv"
 
         # The absolute address of the target to save
         root_path = os.getcwd()  # The absolute path of the current project
-        rel_path = "/static" + "/upload_by_user/"  # Relative path to the folder
+        rel_path = "/static/" + path + "/"  # Relative path to the folder
         abs_path = root_path + rel_path  # The absolute path to the img
 
         if not os.path.exists(abs_path):
@@ -578,19 +650,19 @@ def xlsx_to_csv(cur_file, file_path):
             write.writerow(row_value)
 
 
-def file_convert(user_id, cur_file):
+def file_convert_dataset(user_id, cur_file):
     ret = dict()
     if cur_file is None:
         ret['message'] = 'fail'
-        ret['notification'] = '文件未正确上传！'
+        ret['notification'] = 'File upload fail!'
         return ret
 
     if not file_suffix_check(cur_file):
         ret['message'] = 'fail'
-        ret['notification'] = '文件后缀不匹配，请上传csv或xlsx格式的文件！'
+        ret['notification'] = 'Please upload the file in csv or xlsx!'
         return ret
 
-    is_success, msg = file_save(user_id, cur_file)
+    is_success, msg = file_save(user_id, cur_file, 'upload_by_user')
     if not is_success:
         ret['message'] = 'fail'
         ret['notification'] = msg
@@ -611,6 +683,48 @@ def file_convert(user_id, cur_file):
 
     ret['message'] = 'success'
     ret['notification'] = dataset_review_list
+    return ret
+
+
+def file_convert_license(user_id, cur_file):
+    ret = dict()
+    if cur_file is None:
+        ret['message'] = 'fail'
+        ret['notification'] = 'File upload fail!'
+        return ret
+
+    if not file_suffix_check(cur_file):
+        ret['message'] = 'fail'
+        ret['notification'] = 'Please upload the file in csv or xlsx!'
+        return ret
+
+    is_success, msg = file_save(user_id, cur_file, 'license_upload_by_user')
+    if not is_success:
+        ret['message'] = 'fail'
+        ret['notification'] = msg
+        return ret
+
+    dataset_license_list = []
+    cur_file = csv.reader(open(msg))
+    cnt = 0
+
+    try:
+        for line in cur_file:
+            if cnt == 0:
+                cnt += 1
+                continue
+            dataset = dict()
+            dataset['full_name'] = str(line[0])
+            dataset['identifier'] = str(line[1])
+            dataset['user_id'] = int(line[2])
+            dataset_license_list.append(dataset)
+    except Exception as e:
+        ret['message'] = 'fail'
+        ret['notification'] = e
+        return ret
+
+    ret['message'] = 'success'
+    ret['notification'] = dataset_license_list
     return ret
 
 

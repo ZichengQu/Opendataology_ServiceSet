@@ -1,147 +1,113 @@
 from main import db
 
 
-# class Pending_aibom(db.Model):
-#     _tablename_ = 'pending_aibom'
-#
-#     id = db.Column(db.Integer, unique=True, primary_key=True, autoincrement=True)
-#     dataset_name = db.Column(db.String(255))
-#     homepage = db.Column(db.String(255))
-#     copyright = db.Column(db.String(255))
-#     contributor = db.Column(db.String(255))
-#     license = db.Column(db.JSON)
-#     right = db.Column(db.JSON)
-#     badge = db.Column(db.JSON)
-#     review = db.Column(db.JSON)
-#     comment = db.Column(db.String(255))
-#     userid = db.Column(db.Integer)
-
 class Pending_aibom(db.Model):
     _tablename_ = 'pending_aibom'
 
     id = db.Column(db.Integer, unique=True, primary_key=True, autoincrement=True)
-    # 数据集AIBOM属性
-    name = db.Column(db.String(255))  # 数据集名称
-    location = db.Column(db.String(255))  # 数据集官网
-    originator = db.Column(db.String(255))  # 贡献者
-    license_location = db.Column(db.String(255))  # 许可地址
-    concluded_license = db.Column(db.String(255))  # SPDX License List中的许可
-    declared_license = db.Column(db.String(255))  # 自定义许可
-    type = db.Column(db.String(255))  # 数据集格式，例如图片、音频、视频等
-    size = db.Column(db.String(255))  # 数据集大小
-    intended_use = db.Column(db.String(255))  # 使用目的
-    checksum = db.Column(db.String(255))  # 验证
-    data_collection_process = db.Column(db.String(255))  # 数据收集过程
-    known_biases = db.Column(db.Boolean)  # 是否有已知偏见
-    sensitive_personal_information = db.Column(db.Boolean)  # 是否有个人敏感信息
-    offensive_content = db.Column(db.Boolean)  # 是否有冒犯内容
-    # 上传用户信息
-    user_id = db.Column(db.Integer)  # 待补充该AIBOM的用户
-    # 驳回备注
-    rejection_notes = db.Column(db.String(255))  # 若该数据集AIBOM提交后被驳回，可在此备注
+    # Dataset AIBOM attributes
+    name = db.Column(db.String(255))  # dataset name
+    location = db.Column(db.String(255))  # dataset official website
+    originator = db.Column(db.String(255))  # contributors
+    license_location = db.Column(db.String(255))  # license location
+    concluded_license = db.Column(db.String(255))  # SPDX License List
+    declared_license = db.Column(db.String(255))  # customized license
+    type = db.Column(db.String(255))  # types of this dataset
+    size = db.Column(db.String(255))  # total size of this dataset
+    intended_use = db.Column(db.String(255))  # The purpose why this dataset made
+    checksum = db.Column(db.String(255))  # checksum
+    data_collection_process = db.Column(db.String(255))  # The collection process of data
+    known_biases = db.Column(db.Boolean)
+    sensitive_personal_information = db.Column(db.Boolean)
+    offensive_content = db.Column(db.Boolean)
+    # attach the user info
+    user_id = db.Column(db.Integer)  # the user who should finish the AIBOM of this dataset
+    # notes
+    rejection_notes = db.Column(db.String(255))  # notes when rejected in review
 
-
-# class Pending_review(db.Model):
-#     _tablename_ = 'pending_review'
-#
-#     id = db.Column(db.Integer, unique=True, primary_key=True, autoincrement=True)
-#     dataset_name = db.Column(db.String(255))
-#     homepage = db.Column(db.String(255))
-#     copyright = db.Column(db.String(255))
-#     contributor = db.Column(db.String(255))
-#     license = db.Column(db.JSON)
-#     right = db.Column(db.JSON)
-#     badge = db.Column(db.JSON)
-#     review = db.Column(db.JSON)
-#     comment = db.Column(db.String(255))
-#     userid = db.Column(db.Integer)
 
 class Pending_review(db.Model):
     _tablename_ = 'pending_review'
 
     id = db.Column(db.Integer, unique=True, primary_key=True, autoincrement=True)
-    # 数据集AIBOM属性
-    name = db.Column(db.String(255))  # 数据集名称
-    location = db.Column(db.String(255))  # 数据集官网
-    originator = db.Column(db.String(255))  # 贡献者
-    license_location = db.Column(db.String(255))  # 许可地址
-    concluded_license = db.Column(db.String(255))  # SPDX License List中的许可
-    declared_license = db.Column(db.String(255))  # 自定义许可
-    type = db.Column(db.String(255))  # 数据集格式，例如图片、音频、视频等
-    size = db.Column(db.String(255))  # 数据集大小
-    intended_use = db.Column(db.String(255))  # 使用目的
-    checksum = db.Column(db.String(255))  # 验证
-    data_collection_process = db.Column(db.String(255))  # 数据收集过程
-    known_biases = db.Column(db.Boolean)  # 是否有已知偏见
-    sensitive_personal_information = db.Column(db.Boolean)  # 是否有个人敏感信息
-    offensive_content = db.Column(db.Boolean)  # 是否有冒犯内容
-    # 上传用户信息
-    user_id = db.Column(db.Integer)  # 待补充该AIBOM的用户
-    # 初步review意见
-    review_result_initial = db.Column(db.String(255))  # 初步review结论
-    is_dataset_commercially_used_initial = db.Column(db.Boolean)  # 数据集是否可商业使用
-    is_dataset_commercially_distributed_initial = db.Column(db.Boolean)  # 数据集是否可商业分发
-    is_product_commercially_published_initial = db.Column(db.Boolean)  # 数据集是否可集成到产品发布
-    right_initial = db.Column(db.String(255))  # 初步权利分析
-    obligation_initial = db.Column(db.String(255))  # 初步责任分析
-    limitation_initial = db.Column(db.String(255))  # 初步限制分析
-    notes_initial = db.Column(db.String(255))  # 初步review的备注
-
-
-# class Review_result(db.Model):
-#     _tablename_ = 'dataset_review'
-#
-#     id = db.Column(db.Integer, unique=True, primary_key=True, autoincrement=True)
-#     dataset_name = db.Column(db.String(255))
-#     homepage = db.Column(db.String(255))
-#     copyright = db.Column(db.String(255))
-#     contributor = db.Column(db.String(255))
-#     license = db.Column(db.JSON)
-#     right = db.Column(db.JSON)
-#     badge = db.Column(db.JSON)
-#     review = db.Column(db.JSON)
-#     comment = db.Column(db.String(255))
+    # Dataset AIBOM attributes
+    name = db.Column(db.String(255))  # dataset name
+    location = db.Column(db.String(255))  # dataset official website
+    originator = db.Column(db.String(255))  # contributors
+    license_location = db.Column(db.String(255))  # license location
+    concluded_license = db.Column(db.String(255))  # SPDX License List
+    declared_license = db.Column(db.String(255))  # customized license
+    type = db.Column(db.String(255))  # types of this dataset
+    size = db.Column(db.String(255))  # total size of this dataset
+    intended_use = db.Column(db.String(255))  # The purpose why this dataset made
+    checksum = db.Column(db.String(255))  # checksum
+    data_collection_process = db.Column(db.String(255))  # The collection process of data
+    known_biases = db.Column(db.Boolean)
+    sensitive_personal_information = db.Column(db.Boolean)
+    offensive_content = db.Column(db.Boolean)
+    # attach the user info
+    user_id = db.Column(db.Integer)  # the user who should finish the AIBOM of this dataset
+    # initial review suggestion
+    review_result_initial = db.Column(db.String(255))  # initial review result
+    is_dataset_commercially_used_initial = db.Column(db.Boolean)  # is this dataset allowed to be used commercially
+    is_dataset_commercially_distributed_initial = db.Column(db.Boolean)  # is this dataset allowed to be distributed commercially
+    is_product_commercially_published_initial = db.Column(db.Boolean)  # is this dataset allowed to be published commercially
+    right_initial = db.Column(db.String(255))  # rights for this dataset
+    obligation_initial = db.Column(db.String(255))  # obligation for this dataset
+    limitation_initial = db.Column(db.String(255))  # limitation for this dataset
+    notes_initial = db.Column(db.String(255))  # notes for the initial review
 
 
 class Review_result(db.Model):
     _tablename_ = 'dataset_review'
 
     id = db.Column(db.Integer, unique=True, primary_key=True, autoincrement=True)
-    # 数据集AIBOM属性
-    name = db.Column(db.String(255))  # 数据集名称
-    location = db.Column(db.String(255))  # 数据集官网
-    originator = db.Column(db.String(255))  # 贡献者
-    license_location = db.Column(db.String(255))  # 许可地址
-    concluded_license = db.Column(db.String(255))  # SPDX License List中的许可
-    declared_license = db.Column(db.String(255))  # 自定义许可
-    type = db.Column(db.String(255))  # 数据集格式，例如图片、音频、视频等
-    size = db.Column(db.String(255))  # 数据集大小
-    intended_use = db.Column(db.String(255))  # 使用目的
-    checksum = db.Column(db.String(255))  # 验证
-    data_collection_process = db.Column(db.String(255))  # 数据收集过程
-    known_biases = db.Column(db.Boolean)  # 是否有已知偏见
-    sensitive_personal_information = db.Column(db.Boolean)  # 是否有个人敏感信息
-    offensive_content = db.Column(db.Boolean)  # 是否有冒犯内容
-    # 上传用户信息
-    user_id = db.Column(db.Integer)  # 待补充该AIBOM的用户
-    # 初步review意见
-    review_result_initial = db.Column(db.String(255))  # 初步review结论
-    is_dataset_commercially_used_initial = db.Column(db.Boolean)  # 数据集是否可商业使用
-    is_dataset_commercially_distributed_initial = db.Column(db.Boolean)  # 数据集是否可商业分发
-    is_product_commercially_published_initial = db.Column(db.Boolean)  # 数据集是否可集成到产品发布
-    right_initial = db.Column(db.String(255))  # 初步权利分析
-    obligation_initial = db.Column(db.String(255))  # 初步责任分析
-    limitation_initial = db.Column(db.String(255))  # 初步限制分析
-    notes_initial = db.Column(db.String(255))  # 初步review的备注
-    # 最终review意见
-    review_result_final = db.Column(db.String(255))  # 最终review结论
-    is_dataset_commercially_used_final = db.Column(db.Boolean)  # 数据集是否可商业使用
-    is_dataset_commercially_distributed_final = db.Column(db.Boolean)  # 数据集是否可商业分发
-    is_product_commercially_published_final = db.Column(db.Boolean)  # 数据集是否可集成到产品发布
-    right_final = db.Column(db.String(255))  # 最终权利分析
-    obligation_final = db.Column(db.String(255))  # 最终责任分析
-    limitation_final = db.Column(db.String(255))  # 最终限制分析
-    notes_final = db.Column(db.String(255))  # 最终review的备注
+    # Dataset AIBOM attributes
+    name = db.Column(db.String(255))  # dataset name
+    location = db.Column(db.String(255))  # dataset official website
+    originator = db.Column(db.String(255))  # contributors
+    license_location = db.Column(db.String(255))  # license location
+    concluded_license = db.Column(db.String(255))  # SPDX License List
+    declared_license = db.Column(db.String(255))  # customized license
+    type = db.Column(db.String(255))  # types of this dataset
+    size = db.Column(db.String(255))  # total size of this dataset
+    intended_use = db.Column(db.String(255))  # The purpose why this dataset made
+    checksum = db.Column(db.String(255))  # checksum
+    data_collection_process = db.Column(db.String(255))  # The collection process of data
+    known_biases = db.Column(db.Boolean)
+    sensitive_personal_information = db.Column(db.Boolean)
+    offensive_content = db.Column(db.Boolean)
+    # attach the user info
+    user_id = db.Column(db.Integer)  # the user who should finish the AIBOM of this dataset
+    # initial review suggestion
+    review_result_initial = db.Column(db.String(255))  # initial review result
+    is_dataset_commercially_used_initial = db.Column(db.Boolean)  # is this dataset allowed to be used commercially
+    is_dataset_commercially_distributed_initial = db.Column(db.Boolean)  # is this dataset allowed to be distributed commercially
+    is_product_commercially_published_initial = db.Column(db.Boolean)  # is this dataset allowed to be published commercially
+    right_initial = db.Column(db.String(255))  # rights for this dataset
+    obligation_initial = db.Column(db.String(255))  # obligation for this dataset
+    limitation_initial = db.Column(db.String(255))  # limitation for this dataset
+    notes_initial = db.Column(db.String(255))  # notes for the initial review
+    # final review result
+    review_result_final = db.Column(db.String(255))  # final review result
+    is_dataset_commercially_used_final = db.Column(db.Boolean)  # is this dataset allowed to be used commercially
+    is_dataset_commercially_distributed_final = db.Column(db.Boolean)  # is this dataset allowed to be distributed commercially
+    is_product_commercially_published_final = db.Column(db.Boolean)  # is this dataset allowed to be published commercially
+    right_final = db.Column(db.String(255))  # rights for this dataset
+    obligation_final = db.Column(db.String(255))  # obligation for this dataset
+    limitation_final = db.Column(db.String(255))  # limitation for this dataset
+    notes_final = db.Column(db.String(255))  # notes for the final review
+
+
+class Spdx_license_list(db.Model):
+    _tablename_ = 'spdx_license_list'
+
+    id = db.Column(db.Integer, unique=True, primary_key=True, autoincrement=True)
+    full_name = db.Column(db.String(255))
+    identifier = db.Column(db.String(255))
+    fsf_free_libre = db.Column(db.String(255))
+    osi_approved = db.Column(db.String(255))
+    user_id = db.Column(db.Integer)
 
 
 class Users(db.Model):
@@ -151,3 +117,11 @@ class Users(db.Model):
     account = db.Column(db.String(255))
     password = db.Column(db.String(255))
     verification = db.Column(db.String(255))
+
+
+class Admin(db.Model):
+    _tablename_ = 'admin'
+
+    id = db.Column(db.Integer, unique=True, primary_key=True, autoincrement=True)
+    account = db.Column(db.String(255))
+    uid = db.Column(db.Integer)
