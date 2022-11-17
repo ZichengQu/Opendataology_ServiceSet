@@ -6,7 +6,6 @@ from main import db  # db is not required for queries, but is required for write
 import os
 import time
 import random
-from werkzeug.utils import secure_filename
 import csv
 import xlrd
 import codecs
@@ -609,7 +608,7 @@ def format_check_review(pending_review):
 
 
 def file_suffix_check(cur_file):
-    if secure_filename(cur_file.filename).rsplit('.', 1)[1] == "csv" or secure_filename(cur_file.filename).rsplit('.', 1)[1] == "xlsx":
+    if "." in cur_file.filename and (cur_file.filename.rsplit('.', 1)[1] == "csv" or cur_file.filename.rsplit('.', 1)[1] == "xlsx"):
         return True
     return False
 
@@ -626,7 +625,7 @@ def file_save(user_id, cur_file, path):
         if not os.path.exists(abs_path):
             os.makedirs(abs_path)
 
-        if secure_filename(cur_file.filename).rsplit('.', 1)[1] == "csv":
+        if cur_file.filename.rsplit('.', 1)[1] == "csv":
             cur_file.save(abs_path + file_name)
         else:
             xlsx_to_csv(cur_file, abs_path + file_name)
