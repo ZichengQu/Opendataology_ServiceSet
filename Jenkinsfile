@@ -54,6 +54,7 @@ pipeline {
             }
         }
         
+        
         //前
         stage('sonar load result'){
             steps{
