@@ -14,6 +14,3 @@ api = Api(
 
 api.add_namespace(user_dataset_review_ns, '/user/dataset_review')
 api.add_namespace(auth_dataset_review_ns, '/auth/dataset_review')
-
-
-

@@ -25,11 +25,13 @@ def review_upload(user_id, dataset_review_list):
         location = dataset_review.get("location", "")
         originator = dataset_review.get("originator", [])
         # split via comma and convert to hashset
-        originator = set([contributor.strip() for contributor in originator.split(",")])
+        originator = set([contributor.strip()
+                         for contributor in originator.split(",")])
 
         # Get the potential corresponding audited dataset from the table review_result
         try:
-            review_result = Review_result.query.filter_by(name=name, location=location).all()
+            review_result = Review_result.query.filter_by(
+                name=name, location=location).all()
         except Exception as e:
             ret = dict()
             ret['message'] = 'fail'
@@ -41,7 +43,8 @@ def review_upload(user_id, dataset_review_list):
         if name != "" and location != "" and len(originator) != 0:
             for review in review_result:
                 # Gets the originator of the potential corresponding reviewed dataset
-                review_originator = set([originator.strip() for originator in review.originator.split(",")])
+                review_originator = set(
+                    [originator.strip() for originator in review.originator.split(",")])
                 # Calculate the number of originator intersections between user-uploaded datasets and potentially reviewed datasets
                 intersection = len(originator & review_originator)
                 # If the overlap number is greater than or equal to 2, or more than half of Originators provided by users overlap, the dataset uploaded by users is considered to have been reviewed
@@ -51,7 +54,8 @@ def review_upload(user_id, dataset_review_list):
                     break
 
         if not is_reviewed:
-            dataset_pending_aibom = pending_aibom_transfer(dataset_review, user_id)
+            dataset_pending_aibom = pending_aibom_transfer(
+                dataset_review, user_id)
             try:
                 db.session.add(dataset_pending_aibom)
                 db.session.commit()
@@ -131,7 +135,7 @@ def submit_pending_aibom_list(pending_aibom_list):
         if is_pass:
             pending_review = convert_aibom_to_review(pending_aibom)
             to_delete = Pending_aibom.query.filter_by(id=pending_aibom.get('id', ''),
-                                                              user_id=pending_aibom.get('user_id', '')).first()
+                                                      user_id=pending_aibom.get('user_id', '')).first()
             if to_delete is None:
                 ret['message'] = 'fail'
                 ret['notification'] = 'Cannot submit due to no record in pending aibom'
@@ -155,7 +159,8 @@ def submit_pending_aibom_list(pending_aibom_list):
     if len(error_pending_aibom_format) != 0:
         ret['pending_aibom_list'] = error_pending_aibom_format
         ret['message'] = "fail"
-        ret['notification'] = "AIBOM info has been submitted, the format of AIBOM is incorrect for {} dataset, please submit after modify".format(len(error_pending_aibom_format))
+        ret['notification'] = "AIBOM info has been submitted, the format of AIBOM is incorrect for {} dataset, please submit after modify".format(
+            len(error_pending_aibom_format))
     else:
         ret['message'] = "success"
         ret['notification'] = ""
@@ -170,7 +175,8 @@ def remove_pending_aibom_list(user_id, pending_aibom_ids):
     ret = dict()
 
     try:
-        db.session.execute(to_delete)  # Execute this sql to change the database via session
+        # Execute this sql to change the database via session
+        db.session.execute(to_delete)
         db.session.commit()  # Transaction commit.
 
         ret['message'] = 'success'
@@ -212,7 +218,8 @@ def get_pending_review_list(user_id):
         if user_id == -1:
             pending_review = Pending_review.query.all()
         else:
-            pending_review = Pending_review.query.filter_by(user_id=user_id).all()
+            pending_review = Pending_review.query.filter_by(
+                user_id=user_id).all()
     except Exception as e:
         ret['message'] = 'fail'
         ret['notification'] = e
@@ -227,9 +234,11 @@ def get_pending_review_list(user_id):
 def save_pending_review_list(pending_review_list):
     ret = dict()
     for new_pending_review in pending_review_list:
-        ori_pending_review = Pending_review.query.filter_by(id=new_pending_review.get('id', '')).first()
+        ori_pending_review = Pending_review.query.filter_by(
+            id=new_pending_review.get('id', '')).first()
         if ori_pending_review is not None:
-            ori_pending_review = pending_review_transfer(ori_pending_review, new_pending_review)
+            ori_pending_review = pending_review_transfer(
+                ori_pending_review, new_pending_review)
             try:
                 db.session.add(ori_pending_review)
                 db.session.commit()
@@ -249,14 +258,17 @@ def reject_review(user_id, pending_review_ids, rejection_notes):
     pending_aibom_list = []
 
     for index, pending_review_id in enumerate(pending_review_ids):
-        pending_review = Pending_review.query.filter_by(id=pending_review_id, user_id=user_id).first()
+        pending_review = Pending_review.query.filter_by(
+            id=pending_review_id, user_id=user_id).first()
         if pending_review is None:
             continue
 
-        to_delete = Pending_review.__table__.delete().where(Pending_review.id == pending_review_id).where(Pending_review.user_id == user_id)
+        to_delete = Pending_review.__table__.delete().where(
+            Pending_review.id == pending_review_id).where(Pending_review.user_id == user_id)
 
         pending_aibom = convert_review_to_aibom(pending_review)
-        pending_aibom.rejection_notes = "" if index == len(rejection_notes) else rejection_notes[index]
+        pending_aibom.rejection_notes = "" if index == len(
+            rejection_notes) else rejection_notes[index]
         try:
             db.session.add(pending_aibom)
             db.session.execute(to_delete)
@@ -284,12 +296,13 @@ def submit_pending_review_list(pending_review_list):
     error_pending_review_format = []
 
     for pending_review in pending_review_list:
-        is_pass = format_check_aibom(pending_review) and format_check_review(pending_review) # 格式检查
+        is_pass = format_check_aibom(
+            pending_review) and format_check_review(pending_review)  # 格式检查
 
         if is_pass:
             review_result = convert_review_to_result(pending_review)
             to_delete = Pending_review.query.filter_by(id=pending_review.get('id', ''),
-                                                              user_id=pending_review.get('user_id', '')).first()
+                                                       user_id=pending_review.get('user_id', '')).first()
             if to_delete is None:
                 continue
 
@@ -311,7 +324,8 @@ def submit_pending_review_list(pending_review_list):
     if len(error_pending_review_format) != 0:
         ret['pending_review_list'] = error_pending_review_format
         ret['message'] = "fail"
-        ret['notification'] = "review info has been submitted, the format of review is incorrect for {} dataset, please submit after modify".format(len(error_pending_review_format))
+        ret['notification'] = "review info has been submitted, the format of review is incorrect for {} dataset, please submit after modify".format(
+            len(error_pending_review_format))
     else:
         ret['message'] = "success"
         ret['notification'] = ""
@@ -325,7 +339,8 @@ def get_review_result_list(user_id):
         if user_id == -1:
             review_result = Review_result.query.all()
         else:
-            review_result = Review_result.query.filter_by(user_id=user_id).all()
+            review_result = Review_result.query.filter_by(
+                user_id=user_id).all()
     except Exception as e:
         ret['message'] = 'fail'
         ret['notification'] = e
@@ -348,7 +363,8 @@ def license_upload(user_id, dataset_license_list):
 
         # Get the potential corresponding audited dataset from the table review_result
         try:
-            spdx_license_list = Spdx_license_list.query.filter_by(full_name=full_name, identifier=identifier).all()
+            spdx_license_list = Spdx_license_list.query.filter_by(
+                full_name=full_name, identifier=identifier).all()
         except Exception as e:
             ret = dict()
             ret['message'] = 'fail'
@@ -386,8 +402,10 @@ def get_dataset_license_list(text):
         if text == "":
             spdx_license_list = Spdx_license_list.query.all()
         else:
-            spdx_license_list_1 = set(Spdx_license_list.query.filter(Spdx_license_list.full_name.like('%' + text + '%')).all())
-            spdx_license_list_2 = set(Spdx_license_list.query.filter(Spdx_license_list.identifier.like('%' + text + '%')).all())
+            spdx_license_list_1 = set(Spdx_license_list.query.filter(
+                Spdx_license_list.full_name.like('%' + text + '%')).all())
+            spdx_license_list_2 = set(Spdx_license_list.query.filter(
+                Spdx_license_list.identifier.like('%' + text + '%')).all())
             spdx_license_list = spdx_license_list_1 | spdx_license_list_2
 
     except Exception as e:
@@ -429,27 +447,34 @@ def pending_aibom_transfer(new_aibom_info, user_id, ori_aibom_info=None):
         if "originator" in new_aibom_info.keys():
             ori_aibom_info.originator = new_aibom_info.get("originator", "")
         if "license_location" in new_aibom_info.keys():
-            ori_aibom_info.license_location = new_aibom_info.get("license_location", "")
+            ori_aibom_info.license_location = new_aibom_info.get(
+                "license_location", "")
         if "concluded_license" in new_aibom_info.keys():
-            ori_aibom_info.concluded_license = new_aibom_info.get("concluded_license", None)
+            ori_aibom_info.concluded_license = new_aibom_info.get(
+                "concluded_license", None)
         if "declared_license" in new_aibom_info.keys():
-            ori_aibom_info.declared_license = new_aibom_info.get("declared_license", None)
+            ori_aibom_info.declared_license = new_aibom_info.get(
+                "declared_license", None)
         if "type" in new_aibom_info.keys():
             ori_aibom_info.type = new_aibom_info.get("type", "")
         if "size" in new_aibom_info.keys():
             ori_aibom_info.size = new_aibom_info.get("size", "")
         if "intended_use" in new_aibom_info.keys():
-            ori_aibom_info.intended_use = new_aibom_info.get("intended_use", "")
+            ori_aibom_info.intended_use = new_aibom_info.get(
+                "intended_use", "")
         if "checksum" in new_aibom_info.keys():
             ori_aibom_info.checksum = new_aibom_info.get("checksum", None)
         if "data_collection_process" in new_aibom_info.keys():
-            ori_aibom_info.data_collection_process = new_aibom_info.get("data_collection_process", None)
+            ori_aibom_info.data_collection_process = new_aibom_info.get(
+                "data_collection_process", None)
         if "known_biases" in new_aibom_info.keys() and new_aibom_info.get("known_biases") is not None:
             ori_aibom_info.known_biases = new_aibom_info.get("known_biases", 0)
         if "sensitive_personal_information" in new_aibom_info.keys() and new_aibom_info.get("sensitive_personal_information") is not None:
-            ori_aibom_info.sensitive_personal_information = new_aibom_info.get("sensitive_personal_information", 0)
+            ori_aibom_info.sensitive_personal_information = new_aibom_info.get(
+                "sensitive_personal_information", 0)
         if "offensive_content" in new_aibom_info.keys() and new_aibom_info.get("offensive_content") is not None:
-            ori_aibom_info.offensive_content = new_aibom_info.get("offensive_content", 0)
+            ori_aibom_info.offensive_content = new_aibom_info.get(
+                "offensive_content", 0)
         return ori_aibom_info
 
 
@@ -457,28 +482,44 @@ def pending_review_transfer(ori_pending_review, new_pending_review):
     ori_pending_review.name = new_pending_review.get("name", "")
     ori_pending_review.location = new_pending_review.get("location", "")
     ori_pending_review.originator = new_pending_review.get("originator", "")
-    ori_pending_review.license_location = new_pending_review.get("license_location", "")
-    ori_pending_review.concluded_license = new_pending_review.get("concluded_license", None)
-    ori_pending_review.declared_license = new_pending_review.get("declared_license", None)
+    ori_pending_review.license_location = new_pending_review.get(
+        "license_location", "")
+    ori_pending_review.concluded_license = new_pending_review.get(
+        "concluded_license", None)
+    ori_pending_review.declared_license = new_pending_review.get(
+        "declared_license", None)
     ori_pending_review.type = new_pending_review.get("type", "")
     ori_pending_review.size = new_pending_review.get("size", "")
-    ori_pending_review.intended_use = new_pending_review.get("intended_use", "")
+    ori_pending_review.intended_use = new_pending_review.get(
+        "intended_use", "")
     ori_pending_review.checksum = new_pending_review.get("checksum", None)
-    ori_pending_review.data_collection_process = new_pending_review.get("data_collection_process", None)
-    ori_pending_review.known_biases = new_pending_review.get("known_biases", "")
-    ori_pending_review.sensitive_personal_information = new_pending_review.get("sensitive_personal_information", None)
-    ori_pending_review.offensive_content = new_pending_review.get("offensive_content", None)
+    ori_pending_review.data_collection_process = new_pending_review.get(
+        "data_collection_process", None)
+    ori_pending_review.known_biases = new_pending_review.get(
+        "known_biases", "")
+    ori_pending_review.sensitive_personal_information = new_pending_review.get(
+        "sensitive_personal_information", None)
+    ori_pending_review.offensive_content = new_pending_review.get(
+        "offensive_content", None)
 
     # ori_pending_review.user_id = new_pending_review.get("user_id", "")
 
-    ori_pending_review.review_result_initial = new_pending_review.get("review_result_initial", "")
-    ori_pending_review.is_dataset_commercially_used_initial = new_pending_review.get("is_dataset_commercially_used_initial", 0)
-    ori_pending_review.is_dataset_commercially_distributed_initial = new_pending_review.get("is_dataset_commercially_distributed_initial", 0)
-    ori_pending_review.is_product_commercially_published_initial = new_pending_review.get("is_product_commercially_published_initial", 0)
-    ori_pending_review.right_initial = new_pending_review.get("right_initial", None)
-    ori_pending_review.obligation_initial = new_pending_review.get("obligation_initial", None)
-    ori_pending_review.limitation_initial = new_pending_review.get("limitation_initial", None)
-    ori_pending_review.notes_initial = new_pending_review.get("notes_initial", None)
+    ori_pending_review.review_result_initial = new_pending_review.get(
+        "review_result_initial", "")
+    ori_pending_review.is_dataset_commercially_used_initial = new_pending_review.get(
+        "is_dataset_commercially_used_initial", 0)
+    ori_pending_review.is_dataset_commercially_distributed_initial = new_pending_review.get(
+        "is_dataset_commercially_distributed_initial", 0)
+    ori_pending_review.is_product_commercially_published_initial = new_pending_review.get(
+        "is_product_commercially_published_initial", 0)
+    ori_pending_review.right_initial = new_pending_review.get(
+        "right_initial", None)
+    ori_pending_review.obligation_initial = new_pending_review.get(
+        "obligation_initial", None)
+    ori_pending_review.limitation_initial = new_pending_review.get(
+        "limitation_initial", None)
+    ori_pending_review.notes_initial = new_pending_review.get(
+        "notes_initial", None)
 
     return ori_pending_review
 
@@ -504,9 +545,11 @@ def convert_aibom_to_review(pending_aibom):
         size=pending_aibom.get("size", ""),
         intended_use=pending_aibom.get("intended_use", None),
         checksum=pending_aibom.get("checksum", ""),
-        data_collection_process=pending_aibom.get("data_collection_process", None),
+        data_collection_process=pending_aibom.get(
+            "data_collection_process", None),
         known_biases=pending_aibom.get("known_biases", 0),
-        sensitive_personal_information=pending_aibom.get("sensitive_personal_information", 0),
+        sensitive_personal_information=pending_aibom.get(
+            "sensitive_personal_information", 0),
         offensive_content=pending_aibom.get("offensive_content", 0),
         user_id=pending_aibom.get('user_id', ""),
         review_result_initial="",
@@ -553,17 +596,22 @@ def convert_review_to_result(pending_review):
         size=pending_review.get("size", ""),
         intended_use=pending_review.get("intended_use", ""),
         checksum=pending_review.get("checksum", None),
-        data_collection_process=pending_review.get("data_collection_process", None),
+        data_collection_process=pending_review.get(
+            "data_collection_process", None),
         known_biases=pending_review.get("known_biases", None),
-        sensitive_personal_information=pending_review.get("sensitive_personal_information", None),
+        sensitive_personal_information=pending_review.get(
+            "sensitive_personal_information", None),
         offensive_content=pending_review.get("offensive_content", None),
 
         user_id=pending_review.get("user_id", ""),
 
         review_result_initial=pending_review.get("review_result_initial", ""),
-        is_dataset_commercially_used_initial=pending_review.get("is_dataset_commercially_used_initial", 0),
-        is_dataset_commercially_distributed_initial=pending_review.get("is_dataset_commercially_distributed_initial", 0),
-        is_product_commercially_published_initial=pending_review.get("is_product_commercially_published_initial", 0),
+        is_dataset_commercially_used_initial=pending_review.get(
+            "is_dataset_commercially_used_initial", 0),
+        is_dataset_commercially_distributed_initial=pending_review.get(
+            "is_dataset_commercially_distributed_initial", 0),
+        is_product_commercially_published_initial=pending_review.get(
+            "is_product_commercially_published_initial", 0),
         right_initial=pending_review.get("right_initial", None),
         obligation_initial=pending_review.get("obligation_initial", None),
         limitation_initial=pending_review.get("limitation_initial", None),
@@ -583,7 +631,8 @@ def convert_review_to_result(pending_review):
 
 
 def format_check_aibom(pending_aibom):
-    keys = {"name", "location", "originator", "license_location", "type", "size", "intended_use", "user_id"}
+    keys = {"name", "location", "originator", "license_location",
+            "type", "size", "intended_use", "user_id"}
     for key in keys:
         if key not in pending_aibom.keys() or len(str(pending_aibom[key])) == 0:
             return False
@@ -600,7 +649,8 @@ def format_check_aibom(pending_aibom):
 
 
 def format_check_review(pending_review):
-    keys = {"review_result_initial", "is_dataset_commercially_used_initial", "is_dataset_commercially_distributed_initial", "is_product_commercially_published_initial"}
+    keys = {"review_result_initial", "is_dataset_commercially_used_initial",
+            "is_dataset_commercially_distributed_initial", "is_product_commercially_published_initial"}
     for key in keys:
         if key not in pending_review.keys() or len(str(pending_review[key])) == 0:
             return False
@@ -615,7 +665,8 @@ def file_suffix_check(cur_file):
 
 def file_save(user_id, cur_file, path):
     try:
-        file_name = str(user_id) + "_" + str(int(time.time())) + "_" + str(random.randint(0, 2147483647)) + ".csv"
+        file_name = str(user_id) + "_" + str(int(time.time())) + \
+            "_" + str(random.randint(0, 2147483647)) + ".csv"
 
         # The absolute address of the target to save
         root_path = os.getcwd()  # The absolute path of the current project
@@ -730,7 +781,8 @@ def file_convert_license(user_id, cur_file):
 def review_result_download(user_id, review_result_list):
     ret = dict()
 
-    file_name = str(user_id) + "_" + str(int(time.time())) + "_" + str(random.randint(0, 2147483647)) + ".csv"
+    file_name = str(user_id) + "_" + str(int(time.time())) + \
+        "_" + str(random.randint(0, 2147483647)) + ".csv"
     # The absolute address of the target to save
     root_path = os.getcwd()  # The absolute path of the current project
     rel_path = "/static" + "/download_by_user/"  # Relative path to the folder
@@ -766,24 +818,3 @@ def review_result_download(user_id, review_result_list):
     ret['download_path'] = abs_path
     ret['file_name'] = file_name
     return ret
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

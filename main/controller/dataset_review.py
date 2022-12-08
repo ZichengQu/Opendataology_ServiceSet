@@ -21,14 +21,17 @@ class ReviewUpload(Resource):
     @user_dataset_review_ns.response(403, 'fail', model=DatasetObject.dataset_review_msg_resp)
     def post(self):
         """数据集review上传，直接返回已review部分的数据集结论，未审核过的部分会放入pending_AIBOM中，待调用方补充AIBOM信息"""
-        dataset_review_list_req = json.loads(request.data)  # Parse request into a dictionary
+        dataset_review_list_req = json.loads(
+            request.data)  # Parse request into a dictionary
 
         # Execute the specific method, and get the returned dictionary
         user_id = dataset_review_list_req['user_id']
         dataset_review_list = dataset_review_list_req['dataset_review_list']
-        response_dict = dataset_review.review_upload(user_id, dataset_review_list)
+        response_dict = dataset_review.review_upload(
+            user_id, dataset_review_list)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.dataset_is_reviewed_list_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
 
@@ -45,16 +48,19 @@ class ReviewUploadByFile(Resource):
         user_id = request.form.get("user_id")
         dataset_review_list_req = request.files.get('dataset_review_list')
 
-        dataset_review_list = dataset_review.file_convert_dataset(user_id, dataset_review_list_req)
+        dataset_review_list = dataset_review.file_convert_dataset(
+            user_id, dataset_review_list_req)
 
         if dataset_review_list['message'] == 'success':
             dataset_review_list = dataset_review_list['notification']
             # Execute the specific method, and get the returned dictionary
-            response_dict = dataset_review.review_upload(user_id, dataset_review_list)
+            response_dict = dataset_review.review_upload(
+                user_id, dataset_review_list)
         else:
             response_dict = dataset_review_list
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.dataset_is_reviewed_list_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
 
@@ -73,7 +79,8 @@ class PendingAIBOM(Resource):
         # Execute the specific method, and get the returned dictionary
         response_dict = dataset_review.get_pending_aibom_by_user(user_id)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.pending_aibom_list_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
 
@@ -91,11 +98,13 @@ class SaveAIBOM(Resource):
         pending_aibom_list = hashmap.get('pending_aibom_list', '')
 
         # Execute the specific method, and get the returned dictionary
-        response_dict = dataset_review.save_pending_aibom_list(pending_aibom_list)
+        response_dict = dataset_review.save_pending_aibom_list(
+            pending_aibom_list)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
-        model_ret = DatasetObject.dataset_review_msg_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
+        model_ret = DatasetObject.dataset_review_msg_resp
 
         return marshal(response_dict, model_ret), status_code
 
@@ -115,9 +124,11 @@ class SubmitAIBOM(Resource):
 
         # Execute the specific method, and get the returned dictionary
         dataset_review.save_pending_aibom_list(pending_aibom_list)  # 在提交前先临时保存
-        response_dict = dataset_review.submit_pending_aibom_list(pending_aibom_list)
+        response_dict = dataset_review.submit_pending_aibom_list(
+            pending_aibom_list)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.dataset_review_msg_resp if status_code == 200 else DatasetObject.pending_aibom_list_resp
 
@@ -136,11 +147,13 @@ class RemoveAIBOM(Resource):
         pending_aibom_ids = set(hashmap.get('pending_aibom_review_ids', ''))
 
         # Execute the specific method, and get the returned dictionary
-        response_dict = dataset_review.remove_pending_aibom_list(user_id, pending_aibom_ids)
+        response_dict = dataset_review.remove_pending_aibom_list(
+            user_id, pending_aibom_ids)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
-        model_ret = DatasetObject.dataset_review_msg_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
+        model_ret = DatasetObject.dataset_review_msg_resp
 
         return marshal(response_dict, model_ret), status_code
 
@@ -157,7 +170,8 @@ class GetLicense(Resource):
         # Execute the specific method, and get the returned dictionary
         response_dict = dataset_review.get_dataset_license_list(text)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.license_list_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
 
@@ -179,9 +193,10 @@ class IsAdmin(Resource):
         # Execute the specific method, and get the returned dictionary
         response_dict = dataset_review.is_admin(user_id, account)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
-        model_ret = DatasetObject.dataset_review_msg_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
+        model_ret = DatasetObject.dataset_review_msg_resp
 
         return marshal(response_dict, model_ret), status_code
 
@@ -198,7 +213,8 @@ class PendingReview(Resource):
         # Execute the specific method, and get the returned dictionary
         response_dict = dataset_review.get_pending_review_list(user_id)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.pending_review_list_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
 
@@ -216,11 +232,13 @@ class SaveReview(Resource):
         pending_review_list = hashmap.get('pending_review_list', '')
 
         # Execute the specific method, and get the returned dictionary
-        response_dict = dataset_review.save_pending_review_list(pending_review_list)
+        response_dict = dataset_review.save_pending_review_list(
+            pending_review_list)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
-        model_ret = DatasetObject.dataset_review_msg_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
+        model_ret = DatasetObject.dataset_review_msg_resp
 
         return marshal(response_dict, model_ret), status_code
 
@@ -238,9 +256,11 @@ class RejectReview(Resource):
         rejection_notes = hashmap.get('rejection_notes', "")
 
         # Execute the specific method, and get the returned dictionary
-        response_dict = dataset_review.reject_review(user_id, pending_review_ids, rejection_notes)
+        response_dict = dataset_review.reject_review(
+            user_id, pending_review_ids, rejection_notes)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.pending_aibom_list_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
 
@@ -258,10 +278,13 @@ class SubmitReview(Resource):
         pending_review_list = hashmap.get('pending_review_list', '')
 
         # Execute the specific method, and get the returned dictionary
-        dataset_review.save_pending_review_list(pending_review_list)  # 在提交前先临时保存
-        response_dict = dataset_review.submit_pending_review_list(pending_review_list)
+        dataset_review.save_pending_review_list(
+            pending_review_list)  # 在提交前先临时保存
+        response_dict = dataset_review.submit_pending_review_list(
+            pending_review_list)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.dataset_review_msg_resp if status_code == 200 else DatasetObject.pending_review_list_resp
 
@@ -280,7 +303,8 @@ class ReviewResult(Resource):
         # Execute the specific method, and get the returned dictionary
         response_dict = dataset_review.get_review_result_list(user_id)
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.review_result_list_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
 
@@ -300,16 +324,19 @@ class ReviewResultDownload(Resource):
         response_dict = dataset_review.get_review_result_list(user_id)
 
         if response_dict['message'] == 'success':
-            response_dict = dataset_review.review_result_download(user_id, response_dict['review_result_list'])
+            response_dict = dataset_review.review_result_download(
+                user_id, response_dict['review_result_list'])
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.review_result_list_resp if status_code == 200 else DatasetObject.dataset_review_msg_resp
 
         if status_code == 404:
             return marshal(response_dict, model_ret), status_code
         else:
-            res = make_response(send_from_directory(response_dict['download_path'], response_dict['file_name'], as_attachment=True))
+            res = make_response(send_from_directory(
+                response_dict['download_path'], response_dict['file_name'], as_attachment=True))
             res.headers["Cache-Control"] = "no_store"
             res.headers["max-age"] = 1
             return res
@@ -325,16 +352,19 @@ class LicenseUploadByFile(Resource):
         user_id = request.form.get("user_id")
         dataset_license_list_req = request.files.get('dataset_license_list')
 
-        dataset_license_list_req = dataset_review.file_convert_license(user_id, dataset_license_list_req)
+        dataset_license_list_req = dataset_review.file_convert_license(
+            user_id, dataset_license_list_req)
 
         if dataset_license_list_req['message'] == 'success':
             dataset_license_list = dataset_license_list_req['notification']
             # Execute the specific method, and get the returned dictionary
-            response_dict = dataset_review.license_upload(user_id, dataset_license_list)
+            response_dict = dataset_review.license_upload(
+                user_id, dataset_license_list)
         else:
             response_dict = dataset_license_list_req
 
-        status_code = 200 if response_dict['message'] == 'success' else 403  # success or fail
+        # success or fail
+        status_code = 200 if response_dict['message'] == 'success' else 403
 
         model_ret = DatasetObject.dataset_review_msg_resp if status_code == 200 else DatasetObject.dataset_license_list_resp
 

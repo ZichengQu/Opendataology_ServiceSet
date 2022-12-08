@@ -7,7 +7,8 @@ from main.model.db_models import *
 
 from main.api import blueprint
 
-app = SingletonApp()  # Get app via singleton to ensure this app is unique in this project.
+# Get app via singleton to ensure this app is unique in this project.
+app = SingletonApp()
 app.register_blueprint(blueprint)
 
 # CORS(app, supports_credentials=True)

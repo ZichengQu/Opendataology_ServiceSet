@@ -8,5 +8,3 @@ class AdminObject:
         'user_id': fields.Integer(description='user id', required=True),
         'account': fields.String(description='user account', required=True)
     })
-
-
