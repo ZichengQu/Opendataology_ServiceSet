@@ -46,3 +46,5 @@ The file path on MacOS：/usr/local/lib/python3.8/site-packages/werkzeug/__init_
 ![hierarchical architecture](readme_src/hierarchical-architecture.png)
 
 The main development language is Python3.8.0，based on Linux, with Flask and MySQL adopted.
+
+test pr ci
